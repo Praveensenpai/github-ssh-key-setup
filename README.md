@@ -12,11 +12,9 @@ Automated Ed25519 SSH key generator and GitHub connection setup utility.
 
 ---
 
-## 📦 Installation
+## 📦 Quick Start
 
-> ℹ️ **Note**: AUR submission (`yay -S github-ssh-key-setup-git`) is currently pending due to temporary AUR maintenance. Please use the one-liner installer below in the meantime.
-
-### Manual / One-Liner
+Run this one-liner in your terminal:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Praveensenpai/github-ssh-key-setup/main/install.sh | bash
