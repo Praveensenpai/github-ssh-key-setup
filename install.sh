@@ -1,53 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# GitHub SSH Key Generator & Connection Setup Utility
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 PURPLE='\033[0;35m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
-RED='\033[0;31m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-echo -e "${PURPLE}🚀 Installing github-ssh-key-setup...${NC}\n"
+echo -e "${PURPLE}🔑 Setting up GitHub SSH Key Authentication...${NC}\n"
 
-BIN_DIR="$HOME/.local/bin"
-mkdir -p "$BIN_DIR"
+SSH_DIR="$HOME/.ssh"
+SSH_KEY="$SSH_DIR/id_ed25519"
+PUB_KEY="$SSH_KEY.pub"
 
-RAW_URL="https://raw.githubusercontent.com/Praveensenpai/github-ssh-key-setup/main/bin/github-ssh-key-setup"
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
 
-LOCAL_DIR=""
-if [ -n "${BASH_SOURCE[0]}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
-    LOCAL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
-fi
-
-if [ -n "$LOCAL_DIR" ] && [ -f "$LOCAL_DIR/PKGBUILD" ] && [ -f "$LOCAL_DIR/bin/github-ssh-key-setup" ]; then
-    cp "$LOCAL_DIR/bin/github-ssh-key-setup" "$BIN_DIR/github-ssh-key-setup"
+if [ ! -f "$PUB_KEY" ]; then
+    echo -e "${BLUE}⚙️  No existing SSH key found. Generating new Ed25519 SSH key...${NC}"
+    ssh-keygen -t ed25519 -C "git@github.com" -f "$SSH_KEY" -N ""
+    echo -e "${GREEN}✔ SSH key generated successfully at ${SSH_KEY}.${NC}\n"
 else
-    echo -e "${BLUE}📦 Downloading github-ssh-key-setup binary from GitHub...${NC}"
-    curl -sSL -H 'Cache-Control: no-cache' "$RAW_URL" -o "$BIN_DIR/github-ssh-key-setup"
+    echo -e "${GREEN}✔ Existing SSH key found at ${PUB_KEY}.${NC}\n"
 fi
 
-if [ ! -f "$BIN_DIR/github-ssh-key-setup" ] || [ ! -s "$BIN_DIR/github-ssh-key-setup" ]; then
-    echo -e "${RED}❌ Error: Failed to download github-ssh-key-setup binary!${NC}"
-    exit 1
-fi
+eval "$(ssh-agent -s)" &>/dev/null || true
+ssh-add "$SSH_KEY" &>/dev/null || true
 
-chmod +x "$BIN_DIR/github-ssh-key-setup"
-echo -e "${GREEN}✔ Installed github-ssh-key-setup to ${BIN_DIR}/github-ssh-key-setup${NC}"
+PUB_KEY_CONTENT=$(cat "$PUB_KEY")
 
-SHELL_CONFIGS=("$HOME/.bashrc" "$HOME/.zshrc")
-ALIAS_LINE="alias github-ssh-key-setup='$HOME/.local/bin/github-ssh-key-setup'"
+echo -e "${YELLOW}${BOLD}========================================================================${NC}"
+echo -e "${GREEN}${BOLD}📋 STEP 1: Copy your Public SSH Key below:${NC}"
+echo -e "${YELLOW}${BOLD}========================================================================${NC}\n"
 
-for config in "${SHELL_CONFIGS[@]}"; do
-    if [ -f "$config" ]; then
-        if ! grep -q "alias github-ssh-key-setup=" "$config" 2>/dev/null; then
-            echo "" >> "$config"
-            echo "$ALIAS_LINE" >> "$config"
-            echo -e "${BLUE}📝 Added github-ssh-key-setup alias to $config${NC}"
-        fi
-    fi
-done
+echo -e "${CYAN}${BOLD}${PUB_KEY_CONTENT}${NC}\n"
 
-echo -e "\n${GREEN}${BOLD}▶ Running GitHub SSH setup...${NC}"
-"$BIN_DIR/github-ssh-key-setup"
+echo -e "${YELLOW}${BOLD}========================================================================${NC}"
+echo -e "${GREEN}${BOLD}🌐 STEP 2: Add to GitHub${NC}"
+echo -e "${YELLOW}${BOLD}========================================================================${NC}"
+echo -e "1. Open your browser and go to GitHub SSH Settings:"
+echo -e "   👉 ${CYAN}https://github.com/settings/ssh/new${NC}"
+echo -e "2. In the ${BOLD}Title${NC} box, type a friendly name (e.g. ${CYAN}Arch Linux Laptop${NC})."
+echo -e "3. In the ${BOLD}Key type${NC} dropdown, keep ${CYAN}Authentication Key${NC} selected."
+echo -e "4. Paste your key from Step 1 into the ${BOLD}Key${NC} box."
+echo -e "5. Click ${GREEN}${BOLD}Add SSH Key${NC}.\n"
+
+echo -e "${YELLOW}${BOLD}========================================================================${NC}"
+echo -e "${GREEN}${BOLD}🧪 STEP 3: Verify Connection${NC}"
+echo -e "${YELLOW}${BOLD}========================================================================${NC}"
+echo -e "Run this command to test your SSH connection to GitHub:"
+echo -e "   👉 ${CYAN}ssh -T git@github.com${NC}\n"
